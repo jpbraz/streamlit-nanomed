@@ -1,6 +1,6 @@
 import pandas as pd
 import streamlit as st
-from prophet import Prophet
+from fbprophet import Prophet
 import pymannkendall as mk
 
 
@@ -29,7 +29,7 @@ uploaded_file = st.sidebar.file_uploader("Escolha um arquivo", type=['.csv', '.x
                                  disabled=False)
 
 if uploaded_file is not None:
-    print(uploaded_file.type)
+    # print(uploaded_file.type)
     data = converter_arquivo_em_dataframe(uploaded_file)
 
     if data is not None:
@@ -85,7 +85,6 @@ if uploaded_file is not None:
                 df_mannkendall = pd.DataFrame(data)
                 dados = df_mannkendall[coluna_dados].to_list()
 
-                print(dados)
                 result = mk.original_test(dados)
 
                 st.subheader("Resultado do pyMannKendall")
