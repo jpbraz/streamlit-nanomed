@@ -1,11 +1,11 @@
 import pandas as pd
 import streamlit as st
-from fbprophet import Prophet
+from prophet import Prophet
 import pymannkendall as mk
-from fbprophet.plot import add_changepoints_to_plot
+from prophet.plot import add_changepoints_to_plot
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache_data
 def converter_arquivo_em_dataframe(uploaded_file):
     if uploaded_file.type.endswith('csv'):
         data = pd.read_csv(uploaded_file, sep=";")
