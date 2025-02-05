@@ -8,11 +8,36 @@ from prophet.plot import add_changepoints_to_plot
 @st.cache_data
 def converter_arquivo_em_dataframe(uploaded_file):
     if uploaded_file.type.endswith('csv'):
-        data = pd.read_csv(uploaded_file, sep=";")
-    elif uploaded_file.type.endswith('excel'):
-        data = pd.read_excel(uploaded_file)
+        # ler o arquivo csv e converter para dataframe com verificado automatico do separador
+        try:
+            data = pd.read_csv(uploaded_file, sep=None, engine='python')
+            if data.empty:
+                st.error("Arquivo vazio ou com formato inválido.")
+                return pd.DataFrame(data=None)
+        except pd.errors.ParserError:
+            st.error("Formato de arquivo inválido. Por favor, verifique seu arquivo CSV.")
+            return pd.DataFrame(data=None)
+        except Exception as e:
+            st.error(f"Erro ao ler o arquivo: {str(e)}")
+            return pd.DataFrame(data=None)
+        return data
+    elif uploaded_file.type.endswith('xlsx') or uploaded_file.type.endswith('xls') or uploaded_file.type.endswith('sheet'):
+        # ler o arquivo excel e converter para dataframe
+        try:
+            data = pd.read_excel(uploaded_file)
+            if data.empty:
+                st.error("Arquivo vazio ou com formato inválido.")
+                return pd.DataFrame(data=None)
+        except pd.errors.ParserError:
+            st.error("Por favor, verifique o formato do arquivo. Utilize arquivos CSV ou Excel.")
+            return pd.DataFrame(data=None)
+        except Exception as e:
+            st.error(f"Erro ao ler o arquivo: {str(e)}")
+            return pd.DataFrame(data=None)
+        return data
     else:
         data = pd.DataFrame(data=None)
+        st.error("Formato de arquivo inválido. Por favor, utilize arquivos CSV ou Excel.")
     return data
 
 
@@ -22,19 +47,55 @@ CHOICES_TYPE_PERIOD = {'Y': 'Ano', 'm': 'Mês', 'd': 'Dia', 'H': 'Hora'}
 def format_func(option):
     return CHOICES_TYPE_PERIOD[option]
 
+# Estilização
+with open("styles.css") as css:
+    st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
-st.sidebar.title("Projeto NanoMed/UFRN")
+# Container Principal
+with st.container():
+    st.title("Seja bem-vindo ao NanomedPred/UFRN!")
+    st.markdown('''
+        ##### NanomedPred é uma aplicação web desenvolvida em Python, utilizando ferramentas de código aberto, que permite a utilização de ferramentas de Machine Learning Prophet (FBProphet) e pyMannKendall em uma plataforma web, para análises de predição de dados tabulados em planilhas, dessa maneira não requer conhecimento prévio em programação pelo usuário. A aplicação web permite uma fácil inserção e manipulação dos dados, e fornece uma análise de muitos dados de maneira rápida eficiente.
+    ''', unsafe_allow_html=True)
+    st.write('Para utiliza-la, basta seguir os passos orientados na barra lateral') 
+    st.divider()
+    st.markdown('''
+            O uso da aplicação é gratuita. Caso seja utilizado em trabalho científico, solicitamos que o seja referenciado:
+            NERY, D. ALBUQUERQUE, A., BRAZ, J.P.A., BRAZ, J. K. F.S. **NanomedPred, 2022**. Disponível em: _https://nanomed-emcm.streamlit.app/_ Acesso em: dia, mês e ano.
+            ''')
+
+# Barra Lateral (sidebar)
+# Colocar Logo na Barra Lateral, e disponibiliza-la centralizada
+image = "logo_nanomedpred.png"
+st.sidebar.markdown(
+        """
+        <h1 style="text-align: center; margin-top: 0;">
+            NanomedPred
+        </h1>
+        """,
+        unsafe_allow_html=True
+    )
+st.sidebar.image(image, width=200)
 st.sidebar.caption(
     "Predição de dados epidemiológico usando o pacote Prophet do Facebook (Open Source) para Procedimento de previsão automática")
 
-uploaded_file = st.sidebar.file_uploader("Escolha um arquivo", type=['.csv', '.xls'], accept_multiple_files=False,
-                                 disabled=False)
+# Carregar arquivo
+st.sidebar.header("Carregar Arquivo")
+st.sidebar.caption("O arquivo deve conter duas colunas: uma para a data e outra para os dados a serem previstos.")
 
+uploaded_file = st.sidebar.file_uploader("Escolha um arquivo", type=['.csv', '.xls', '.xlsx'], 
+                                accept_multiple_files=False,
+                                disabled=False)
+
+# Carregar dados
 if uploaded_file is not None:
-    # print(uploaded_file.type)
+    # converter arquivo em dataframe
     data = converter_arquivo_em_dataframe(uploaded_file)
 
     if data is not None:
+        
+        st.success('Arquivo Carregado')
+
         # variaveis para campos de atributos das predições
         qnt_max = int(len(data.index)*0.20)
 
@@ -46,8 +107,8 @@ if uploaded_file is not None:
         st.sidebar.subheader("Defina os atributos para predição")
 
         # mapeando dados do usuário para cada atributo
-        periodo_dados = st.sidebar.selectbox("Coluna da Data", options=list(data.select_dtypes(exclude=['int64', 'float64'])))
-        coluna_dados = st.sidebar.selectbox("Coluna de Dados", options=list(data.select_dtypes(include=['int64', 'float64'])))
+        periodo_dados = st.sidebar.selectbox("Coluna de tempo (data)", options=list(data.select_dtypes(exclude=['int64', 'float64'])))
+        coluna_dados = st.sidebar.selectbox("Coluna dos valores (dados)", options=list(data.select_dtypes(include=['int64', 'float64'])))
         tipo_periodo_predicao = st.sidebar.selectbox("Tipo de Periodo para Predição",
                                                      options=list(CHOICES_TYPE_PERIOD.keys()), format_func=format_func)
         periodo_predicao = st.sidebar.slider(label='Período para predição', min_value=0, max_value=qnt_max, value=1)
