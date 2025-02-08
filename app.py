@@ -8,10 +8,10 @@ from prophet.plot import add_changepoints_to_plot
 @st.cache_data
 def converter_arquivo_em_dataframe(uploaded_file):
     """Função para converter um arquivo de entrada em um dataframe."""
-    print(uploaded_file)
-    # verificar se o arquivo foi carregado
+    
+    # verifica qual o tipo de arquivo carregado e cria o dataframe
     if uploaded_file.type.endswith('csv'):
-        # ler o arquivo csv e converter para dataframe com verificado automatico do separador
+        # ler o arquivo csv, com verificação automatica do separador, e converter para dataframe 
         try:
             data = pd.read_csv(uploaded_file, sep=None, engine='python')
             if data.empty:
@@ -23,7 +23,6 @@ def converter_arquivo_em_dataframe(uploaded_file):
         except Exception as e:
             st.error(f"Erro ao ler o arquivo: {str(e)}")
             return pd.DataFrame(data=None)
-        return data
     elif uploaded_file.type.endswith('xlsx') or uploaded_file.type.endswith('xls') or uploaded_file.type.endswith('sheet') or uploaded_file.type.endswith('excel'):
         # ler o arquivo excel e converter para dataframe
         try:
@@ -37,10 +36,10 @@ def converter_arquivo_em_dataframe(uploaded_file):
         except Exception as e:
             st.error(f"Erro ao ler o arquivo: {str(e)}")
             return pd.DataFrame(data=None)
-        return data
     else:
         data = pd.DataFrame(data=None)
         st.error("Formato de arquivo inválido. Por favor, utilize arquivos CSV ou Excel.")
+
     return data
 
 
@@ -50,12 +49,12 @@ CHOICES_TYPE_PERIOD = {'Y': 'Ano', 'm': 'Mês', 'd': 'Dia', 'H': 'Hora'}
 def format_func(option):
     return CHOICES_TYPE_PERIOD[option]
 
+
 # Estilização
 with open("styles.css") as css:
     st.markdown(f"<style>{css.read()}</style>", unsafe_allow_html=True)
 
 # Barra Lateral (sidebar)
-# Colocar Logo na Barra Lateral, e disponibiliza-la centralizada
 image = "logo_nanomedpred.png"
 st.sidebar.markdown(
         """
@@ -78,8 +77,6 @@ uploaded_file = st.sidebar.file_uploader("Escolha um arquivo", type=['.csv', '.x
                                 disabled=False)
 
 
-
-
 # Carregar dados
 if uploaded_file is not None:
     # converter arquivo em dataframe
@@ -91,11 +88,6 @@ if uploaded_file is not None:
 
         # variaveis para campos de atributos das predições
         qnt_max = int(len(data.index)*0.20)
-
-        # fig, ax = plt.subplots()
-        # data.hist(bins=8, column=coluna_dados, grid=False, figsize=(4, 4), color="#86bf91", zorder=2, rwidth=0.9, ax=ax, )
-        # st.subheader('Histograma')
-        # st.write(fig)
 
         st.sidebar.subheader("Defina os atributos para predição")
 
@@ -159,16 +151,14 @@ if uploaded_file is not None:
                     # print(data[periodo_dados].to_list)
 
                     # Prophet
-                    # df2 = pd.DataFrame.from_records(data)
                     df = data.copy()
                     df.rename(columns={periodo_dados: 'ds', coluna_dados: 'y'}, inplace=True)
 
-                    print(df)
-
                     m = Prophet()
                     m.fit(df)
+
                     future = m.make_future_dataframe(periods=periodo_predicao, freq=tipo_periodo_predicao, include_history=True)
-                    # future.tail()
+
                     forecast = m.predict(future)
                     # forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
                     fig1 = m.plot(forecast, xlabel=format_func(tipo_periodo_predicao), ylabel='Frequência')
@@ -178,8 +168,6 @@ if uploaded_file is not None:
 
                     st.success('Predição Realizada')
 
-                    # st.subheader('Dados')
-                    # st.write(forecast)
                     st.subheader('Gráfico com predição')
                     st.write(fig1)
                     st.write(fig2)
@@ -221,7 +209,7 @@ if uploaded_file is not None:
                     st.info('Análise de Tendências usando o pymannkendall finalizada.')
 
 else:
-    # Container Principal
+    # Container Principal com informações do projeto, ao carregar página inicial.
     with st.container():
         st.title("Seja bem-vindo ao NanomedPred/UFRN!")
         st.markdown('''
